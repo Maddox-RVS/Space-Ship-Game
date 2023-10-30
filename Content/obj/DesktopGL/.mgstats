@@ -1,0 +1,4 @@
+Source File,Dest File,Processor Type,Content Type,Source File Size,Dest File Size,Build Seconds
+"C:/Users/rynvn/Desktop/Programs/C# Programs/SpaceShip Game/Content/Astroids/AstroidNormal1.png","C:/Users/rynvn/Desktop/Programs/C# Programs/SpaceShip Game/Content/bin/DesktopGL/Astroids/AstroidNormal1.xnb","TextureProcessor","Texture2DContent",310,40085,0.1558231
+"C:/Users/rynvn/Desktop/Programs/C# Programs/SpaceShip Game/Content/Fonts/Default.spritefont","C:/Users/rynvn/Desktop/Programs/C# Programs/SpaceShip Game/Content/bin/DesktopGL/Fonts/Default.xnb","FontDescriptionProcessor","SpriteFontContent",2065,136223,0.1225889
+"C:/Users/rynvn/Desktop/Programs/C# Programs/SpaceShip Game/Content/SpaceShip/SpaceShip1.png","C:/Users/rynvn/Desktop/Programs/C# Programs/SpaceShip Game/Content/bin/DesktopGL/SpaceShip/SpaceShip1.xnb","TextureProcessor","Texture2DContent",339,40085,0.0033815

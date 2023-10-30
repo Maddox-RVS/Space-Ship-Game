@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "JDmTkoL4RyUAp9imgjczQk+Cs9Tu5n6G/6RI7hgKIKqmsGfVk31C8bhMsoY0HQEuyjS7eBjyAL4f8clM497mSQ==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\rynvn\\Desktop\\Programs\\C# Programs\\SpaceShip Game\\SpaceShip Game.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\rynvn\\.nuget\\packages\\monogame.content.builder.task\\3.8.1.303\\monogame.content.builder.task.3.8.1.303.nupkg.sha512",
+    "C:\\Users\\rynvn\\.nuget\\packages\\monogame.framework.desktopgl\\3.8.1.303\\monogame.framework.desktopgl.3.8.1.303.nupkg.sha512"
+  ],
+  "logs": []
+}
