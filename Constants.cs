@@ -23,7 +23,8 @@ namespace SpaceShip_Game
             public const float ANGULAR_DECCELERATION = 0.05f;
             public const float MAX_ANGULAR_VELOCITY = 10.0f;
             
-            public const float COLLISION_VELOCITY_LOSS_PERCENT = 0.75f;
+            public const float COLLISION_VELOCITY_LOSS_PERCENT = 0.90f;
+            public const float COLLISION_ROTATIONAL_VELOCITY = 3.0f;
         }
 
         public static class AstroidConsts
@@ -34,6 +35,8 @@ namespace SpaceShip_Game
             public const float ANGULAR_ACCELERATION = 0.15f;
             public const float ANGULAR_DECCELERATION = 0.05f;
             public const float MAX_ANGULAR_VELOCITY = 10.0f;
+
+            public const float COLLISION_VELOCITY_LOSS_PERCENT = 0.25f;
         }
     }
 }

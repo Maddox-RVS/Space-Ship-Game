@@ -12,7 +12,7 @@ using static SpaceShip_Game.space_ship.SpaceShip;
 
 namespace SpaceShip_Game.astroid
 {
-    internal class Astroid
+    public class Astroid : GameObject
     {
         private Texture2D texture;
         private bool splitOnDestruction;
@@ -34,7 +34,9 @@ namespace SpaceShip_Game.astroid
         private float angularDecceleration;
 
         private bool isColliding;
+        private bool lastIsColliding;
         private COLLISION_SIDE collisionSide;
+        private Vector2 lastVeloBeforCollision;
 
         public enum COLLISION_SIDE
         {
@@ -69,10 +71,10 @@ namespace SpaceShip_Game.astroid
             angularDecceleration = Constants.AstroidConsts.ANGULAR_DECCELERATION;
         }
 
-        public void Update(SpaceShip spaceShip)
+        public void Update(GameObject[] gameObjects)
         {
             updateMovement();
-            checkCollision(spaceShip);
+            checkCollision(gameObjects);
         }
 
         private void updateMovement()
@@ -98,41 +100,92 @@ namespace SpaceShip_Game.astroid
             angularVelocity = Math.Clamp(angularVelocity, -maxAngularVelocity, maxAngularVelocity);
         }
 
-        public void checkCollision(SpaceShip spaceShip)
+        public void checkCollision(GameObject[] gameObjects)
         {
-            if (getBounds().Intersects(spaceShip.getPixelBounds()))
+            foreach (GameObject gameObject in gameObjects)
             {
-                isColliding = true;
+                if (getBounds().Intersects(gameObject.getBounds()) && gameObject != this)
+                {
+                    isColliding = true;
 
-                float topDistance = Math.Abs(getBounds().Top - spaceShip.getPixelBounds().Bottom);
-                float bottomDistance = Math.Abs(getBounds().Bottom - spaceShip.getPixelBounds().Top);
-                float leftDistance = Math.Abs(getBounds().Left - spaceShip.getPixelBounds().Right);
-                float rightDistance = Math.Abs(getBounds().Right - spaceShip.getPixelBounds().Left);
+                    float topDistance = Math.Abs(getBounds().Top - gameObject.getBounds().Bottom);
+                    float bottomDistance = Math.Abs(getBounds().Bottom - gameObject.getBounds().Top);
+                    float leftDistance = Math.Abs(getBounds().Left - gameObject.getBounds().Right);
+                    float rightDistance = Math.Abs(getBounds().Right - gameObject.getBounds().Left);
 
-                if (topDistance < bottomDistance && topDistance < leftDistance && topDistance < rightDistance) 
-                    collisionSide = COLLISION_SIDE.TOP;
-                else if (bottomDistance < topDistance && bottomDistance < leftDistance && bottomDistance < rightDistance)
-                    collisionSide = COLLISION_SIDE.BOTTOM;
-                else if (leftDistance < topDistance && leftDistance < bottomDistance && topDistance < rightDistance)
-                    collisionSide = COLLISION_SIDE.LEFT;
-                else if (rightDistance < topDistance && rightDistance < bottomDistance && rightDistance < leftDistance)
-                    collisionSide = COLLISION_SIDE.RIGHT;
-            }
-            else
-            {
-                isColliding = false;
-                collisionSide = COLLISION_SIDE.NONE;
-            }
+                    if (topDistance < bottomDistance && topDistance < leftDistance && topDistance < rightDistance) 
+                        collisionSide = COLLISION_SIDE.TOP;
+                    else if (bottomDistance < topDistance && bottomDistance < leftDistance && bottomDistance < rightDistance)
+                        collisionSide = COLLISION_SIDE.BOTTOM;
+                    else if (leftDistance < topDistance && leftDistance < bottomDistance && topDistance < rightDistance)
+                        collisionSide = COLLISION_SIDE.LEFT;
+                    else if (rightDistance < topDistance && rightDistance < bottomDistance && rightDistance < leftDistance)
+                        collisionSide = COLLISION_SIDE.RIGHT;
+                }
+                else
+                {
+                    isColliding = false;
+                    collisionSide = COLLISION_SIDE.NONE;
+                }
 
-            if (isColliding)
-            {
-                translationalVelocity += spaceShip.getProperties().translationalVelocity;
+                if (isColliding && lastIsColliding != isColliding)
+                {
+                    lastVeloBeforCollision = translationalVelocity;
+
+                    if (gameObject.getVelocity() == Vector2.Zero)
+                    {
+                        switch(collisionSide)
+                        {
+                            case COLLISION_SIDE.NONE: break;
+                            case COLLISION_SIDE.TOP:
+                                translationalVelocity.Y *= -(1 - Constants.AstroidConsts.COLLISION_VELOCITY_LOSS_PERCENT);
+                                break;
+                            case COLLISION_SIDE.BOTTOM:
+                                translationalVelocity.Y *= -(1 - Constants.AstroidConsts.COLLISION_VELOCITY_LOSS_PERCENT);
+                                break;
+                            case COLLISION_SIDE.LEFT:
+                                translationalVelocity.X *= -(1 - Constants.AstroidConsts.COLLISION_VELOCITY_LOSS_PERCENT);
+                                break;
+                            case COLLISION_SIDE.RIGHT:
+                                translationalVelocity.X *= -(1 - Constants.AstroidConsts.COLLISION_VELOCITY_LOSS_PERCENT);
+                                break;
+                        }
+                    }
+                    else
+                        translationalVelocity = gameObject.getLastVelocity();
+                }
+                lastIsColliding = isColliding;
             }
         }
 
         public Rectangle getBounds()
         {
             return new Rectangle((int)x, (int)y, (int)width, (int)height);
+        }
+
+        public Vector2 getPosition()
+        {
+            return new Vector2(x, y);
+        }
+
+        public float getRotationDegrees()
+        {
+            return rotation;
+        }
+
+        public Vector2 getVelocity()
+        {
+            return translationalVelocity;
+        }
+
+        public Vector2 getLastVelocity()
+        {
+            return lastVeloBeforCollision;
+        }
+
+        public GameObject.Object getObjectType()
+        {
+            return GameObject.Object.ASTROID;
         }
 
         public Texture2D getTexture()

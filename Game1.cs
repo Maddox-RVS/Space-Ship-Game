@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using SpaceShip_Game.util;
 using SpaceShip_Game.astroid;
 using System.Diagnostics;
+using System.Linq;
 
 namespace SpaceShip_Game
 {
@@ -16,9 +17,10 @@ namespace SpaceShip_Game
         public static Rectangle screenBounds;
         public static Dictionary<string, Texture2D> textures;
         public static Dictionary<string, SpriteFont> fonts;
+        public static GameObject[] gameObjects;
         public bool debugMode;
         private SpaceShip spaceShip;
-        private Astroid astroid;
+        public static Astroid[] astroids;
 
         public Game1()
         {
@@ -55,7 +57,7 @@ namespace SpaceShip_Game
             spaceShip = new SpaceShip(textures["SpaceShip"], 0, 0);
             spaceShip.setPositionDefault();
 
-            astroid = new Astroid(textures["Astroid"], 800, 300, 1, 1, false, 0.50f, false);
+            astroids.Append(new Astroid(textures["Astroid"], 800, 300, 1, 1, false, 0.50f, false));
         }
 
         protected override void Update(GameTime gameTime)
@@ -63,8 +65,13 @@ namespace SpaceShip_Game
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            spaceShip.Update();
-            astroid.Update(spaceShip);
+            gameObjects = astroids;
+
+            spaceShip.Update(spriteBatch, gameObjects);
+            foreach (Astroid astroid in astroids)
+            {
+                astroid.Update(gameObjects);
+            }
 
             base.Update(gameTime);
         }
@@ -90,13 +97,14 @@ namespace SpaceShip_Game
             texture.SetData(new[] { Color.White });
 
             spriteBatch.Draw(texture, spaceShip.getBounds(), new Color(100, 0, 0, 20));
-            spriteBatch.Draw(texture, spaceShip.getPixelBounds(), new Color(100, 0, 0, 20));
+            spriteBatch.Draw(texture, spaceShip.getBounds(), new Color(100, 0, 0, 20));
 
             spriteBatch.DrawString(fonts["Debug"], "Rotation: " + spaceShip.getProperties().rotation.ToString(), new Vector2(15, 10), Color.Blue);
             spriteBatch.DrawString(fonts["Debug"], "Velocity: " + spaceShip.getProperties().translationalVelocity.X.ToString() + ", " + spaceShip.getProperties().translationalVelocity.Y.ToString(), new Vector2(15, 80), Color.Blue);
             spriteBatch.DrawString(fonts["Debug"], "Direction: " + spaceShip.getProperties().translationalDirection.X.ToString() + ", " + spaceShip.getProperties().translationalDirection.Y.ToString(), new Vector2(15, 150), Color.Blue);
             spriteBatch.DrawString(fonts["Debug"], "IsColliding: " + spaceShip.getProperties().isColliding.ToString(), new Vector2(15, 220), Color.Blue);
             spriteBatch.DrawString(fonts["Debug"], "CollisionSide: " + spaceShip.getProperties().collisionSide.ToString(), new Vector2(15, 290), Color.Blue);
+            spriteBatch.DrawString(fonts["Debug"], "Astroid Velo: " + astroid.getVelocity().ToString(), new Vector2(15, 360), Color.Blue);
 
             if (spaceShip.getBounds().Intersects(astroid.getBounds()))
                 spriteBatch.Draw(texture, Rectangle.Intersect(spaceShip.getBounds(), astroid.getBounds()), new Color(0, 0, 255, 50));

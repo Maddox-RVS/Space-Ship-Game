@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SpaceShip_Game.space_ship
 {
-    internal class SpaceShipProperties
+    public class SpaceShipProperties
     {
         public float x, y;
         public float rotation;

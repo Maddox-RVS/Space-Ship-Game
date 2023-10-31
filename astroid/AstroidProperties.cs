@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace SpaceShip_Game.astroid
 {
-    internal class AstroidProperties
+    public class AstroidProperties
     {
         public bool splitOnDestruction;
         public bool isOffspring;

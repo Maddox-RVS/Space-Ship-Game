@@ -43,14 +43,14 @@ namespace SpaceShip_Game.util
             return new Vector2(width/texture.Width, height/texture.Height);
         }
 
-        public static bool calculatePixelCollision(SpriteBatch spriteBatch, Texture2D texture1, Rectangle rectangle1, float degrees1, Texture2D texture2, Rectangle rectangle2, float degrees2)
+        public static bool calculatePixelCollision(SpriteBatch spriteBatch, Texture2D texture1, Rectangle rectangle1, float degrees1, Texture2D texture2, Rectangle rectangle2, float degrees2, bool inSpriteBatch)
         {
             if (!rectangle1.Intersects(rectangle2)) return false;
 
-            texture1 = Helpers.scaleTexture2D(spriteBatch, texture1, rectangle1.Width, rectangle1.Height);
-            texture1 = Helpers.rotateTexture2D(spriteBatch, texture1, degrees1);
-            texture2 = Helpers.scaleTexture2D(spriteBatch, texture2, rectangle2.Width, rectangle2.Height);
-            texture2 = Helpers.rotateTexture2D(spriteBatch, texture2, degrees2);
+            texture1 = Helpers.scaleTexture2D(spriteBatch, texture1, rectangle1.Width, rectangle1.Height, inSpriteBatch);
+            texture1 = Helpers.rotateTexture2D(spriteBatch, texture1, degrees1, inSpriteBatch);
+            texture2 = Helpers.scaleTexture2D(spriteBatch, texture2, rectangle2.Width, rectangle2.Height, inSpriteBatch);
+            texture2 = Helpers.rotateTexture2D(spriteBatch, texture2, degrees2, inSpriteBatch);
 
             Rectangle overlap = Rectangle.Intersect(rectangle1, rectangle2);
             Rectangle normalizedOverlap1 = new Rectangle(
@@ -76,7 +76,7 @@ namespace SpaceShip_Game.util
             return false;
         }
 
-        public static Texture2D scaleTexture2D(SpriteBatch spriteBatch, Texture2D texture, float width, float height)
+        public static Texture2D scaleTexture2D(SpriteBatch spriteBatch, Texture2D texture, float width, float height, bool inSpriteBatch)
         {
             RenderTarget2D renderTarget = new RenderTarget2D(
                 spriteBatch.GraphicsDevice,
@@ -87,7 +87,7 @@ namespace SpaceShip_Game.util
                 spriteBatch.GraphicsDevice.PresentationParameters.DepthStencilFormat
             );
 
-            spriteBatch.End();
+            if (inSpriteBatch) spriteBatch.End();
             spriteBatch.GraphicsDevice.SetRenderTarget(renderTarget);
 
             spriteBatch.Begin();
@@ -95,12 +95,12 @@ namespace SpaceShip_Game.util
             spriteBatch.Draw(texture, new Rectangle(0, 0, (int)width, (int)height), Color.White);
             spriteBatch.End();
             spriteBatch.GraphicsDevice.SetRenderTarget(null);
-            spriteBatch.Begin();
+            if (inSpriteBatch) spriteBatch.Begin();
 
             return (Texture2D) renderTarget;
         }
 
-        public static Texture2D rotateTexture2D(SpriteBatch spriteBatch, Texture2D texture, float degrees)
+        public static Texture2D rotateTexture2D(SpriteBatch spriteBatch, Texture2D texture, float degrees, bool inSpriteBatch)
         {
             RenderTarget2D renderTarget = new RenderTarget2D(
                 spriteBatch.GraphicsDevice,
@@ -111,7 +111,7 @@ namespace SpaceShip_Game.util
                 spriteBatch.GraphicsDevice.PresentationParameters.DepthStencilFormat
             );
 
-            spriteBatch.End();
+            if (inSpriteBatch) spriteBatch.End();
             spriteBatch.GraphicsDevice.SetRenderTarget(renderTarget);
 
             spriteBatch.Begin();
@@ -128,7 +128,7 @@ namespace SpaceShip_Game.util
             spriteBatch.End();
 
             spriteBatch.GraphicsDevice.SetRenderTarget(null);
-            spriteBatch.Begin();
+            if (inSpriteBatch) spriteBatch.Begin();
 
             return (Texture2D)renderTarget;
         }

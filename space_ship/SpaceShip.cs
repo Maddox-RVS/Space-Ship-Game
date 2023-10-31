@@ -12,10 +12,12 @@ using SpaceShip_Game;
 using SpaceShip_Game.astroid;
 using System.Net.WebSockets;
 using System.Reflection.Metadata;
+using SpaceShip_Game.space_ship;
+using static SpaceShip_Game.space_ship.SpaceShip;
 
 namespace SpaceShip_Game.space_ship
 {
-    internal class SpaceShip
+    public class SpaceShip : GameObject
     {
         private Texture2D texture;
         private float x, y;
@@ -35,7 +37,9 @@ namespace SpaceShip_Game.space_ship
         private Vector2 translationalDirection;
 
         private bool isColliding;
+        private bool lastIsColliding;
         private COLLISION_SIDE collisionSide;
+        private Vector2 lastVeloBeforCollision;
 
         public enum COLLISION_SIDE
         {
@@ -69,10 +73,10 @@ namespace SpaceShip_Game.space_ship
             angularVelocity = 0;
         }
 
-        public void Update()
+        public void Update(SpriteBatch spriteBatch, GameObject[] gameObjects)
         {
             updateMovement();
-            checkCollisions();
+            checkCollisions(spriteBatch, gameObjects);
         }
 
         private void updateMovement()
@@ -116,27 +120,81 @@ namespace SpaceShip_Game.space_ship
             }
         }
 
-        public void checkCollisions()
+        public void checkCollisions(SpriteBatch spriteBatch, GameObject[] gameObjects)
         {
-            if (isColliding)
+            foreach (GameObject gameObject in gameObjects)
             {
-                switch (collisionSide)
+                if (getBounds().Intersects(gameObject.getBounds()) && gameObject != this)
                 {
-                    case COLLISION_SIDE.NONE: break;
-                    case COLLISION_SIDE.TOP:
-                        translationalVelocity.Y *= -(1-Constants.SpaceShipConsts.COLLISION_VELOCITY_LOSS_PERCENT);
-                        break;
-                    case COLLISION_SIDE.BOTTOM:
-                        translationalVelocity.Y *= -(1-Constants.SpaceShipConsts.COLLISION_VELOCITY_LOSS_PERCENT);;
-                        break;
-                    case COLLISION_SIDE.LEFT:
-                        translationalVelocity.X *= -(1-Constants.SpaceShipConsts.COLLISION_VELOCITY_LOSS_PERCENT);;
-                        x += 5.0f;
-                        break;
-                    case COLLISION_SIDE.RIGHT: 
-                        translationalVelocity.X *= -(1-Constants.SpaceShipConsts.COLLISION_VELOCITY_LOSS_PERCENT);;
-                        break;
+                    isColliding = true;
+
+                    float topDistance = Math.Abs(getBounds().Top - gameObject.getBounds().Bottom);
+                    float bottomDistance = Math.Abs(getBounds().Bottom - gameObject.getBounds().Top);
+                    float leftDistance = Math.Abs(getBounds().Left - gameObject.getBounds().Right);
+                    float rightDistance = Math.Abs(getBounds().Right - gameObject.getBounds().Left);
+
+                    if (topDistance < bottomDistance && topDistance < leftDistance && topDistance < rightDistance) 
+                        collisionSide = COLLISION_SIDE.TOP;
+                    else if (bottomDistance < topDistance && bottomDistance < leftDistance && bottomDistance < rightDistance)
+                        collisionSide = COLLISION_SIDE.BOTTOM;
+                    else if (leftDistance < topDistance && leftDistance < bottomDistance && topDistance < rightDistance)
+                        collisionSide = COLLISION_SIDE.LEFT;
+                    else if (rightDistance < topDistance && rightDistance < bottomDistance && rightDistance < leftDistance)
+                        collisionSide = COLLISION_SIDE.RIGHT;
                 }
+                else
+                {
+                    isColliding = false;
+                    collisionSide = COLLISION_SIDE.NONE;
+                }
+
+                if (isColliding && lastIsColliding != isColliding)
+                {
+                    lastVeloBeforCollision = translationalVelocity;
+
+                    if (gameObject.getVelocity() == Vector2.Zero)
+                    {
+                        switch(collisionSide)
+                        {
+                            case COLLISION_SIDE.NONE: break;
+                            case COLLISION_SIDE.TOP:
+                                translationalVelocity.Y *= -(1 - Constants.SpaceShipConsts.COLLISION_VELOCITY_LOSS_PERCENT);
+                                break;
+                            case COLLISION_SIDE.BOTTOM:
+                                translationalVelocity.Y *= -(1 - Constants.SpaceShipConsts.COLLISION_VELOCITY_LOSS_PERCENT);
+                                break;
+                            case COLLISION_SIDE.LEFT:
+                                translationalVelocity.X *= -(1 - Constants.SpaceShipConsts.COLLISION_VELOCITY_LOSS_PERCENT);
+                                break;
+                            case COLLISION_SIDE.RIGHT:
+                                translationalVelocity.X *= -(1 - Constants.SpaceShipConsts.COLLISION_VELOCITY_LOSS_PERCENT);
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        translationalVelocity = gameObject.getLastVelocity();
+                        switch(collisionSide)
+                        {
+                            case COLLISION_SIDE.NONE: break;
+                            case COLLISION_SIDE.TOP:
+                                angularVelocity += Constants.SpaceShipConsts.COLLISION_ROTATIONAL_VELOCITY;
+                                break;
+                            case COLLISION_SIDE.BOTTOM:
+                                angularVelocity -= Constants.SpaceShipConsts.COLLISION_ROTATIONAL_VELOCITY;
+                                break;
+                            case COLLISION_SIDE.LEFT:
+                                angularVelocity += Constants.SpaceShipConsts.COLLISION_ROTATIONAL_VELOCITY;
+                                break;
+                            case COLLISION_SIDE.RIGHT:
+                                angularVelocity -= Constants.SpaceShipConsts.COLLISION_ROTATIONAL_VELOCITY;
+                                break;
+                        }
+                    }
+
+                    Debug.WriteLine("test");
+                }
+                lastIsColliding = isColliding;
             }
         }
 
@@ -146,14 +204,34 @@ namespace SpaceShip_Game.space_ship
             y = Game1.screenBounds.Height / 2 - height / 2;
         }
 
-        public Rectangle getBounds()
+        public Rectangle getSeperateBounds()
         {
             return new Rectangle((int)x - (int)(boundsWidth/2), (int)y - (int)(boundsHeight/2), (int)boundsWidth, (int)boundsHeight);
         }
 
-        public Rectangle getPixelBounds()
+        public Rectangle getBounds()
         {
             return new Rectangle((int)x - (int)(width/2), (int)y - (int)(height/2), (int)width, (int)height);
+        }
+
+        public Vector2 getPosition()
+        {
+            return new Vector2(x, y);
+        }
+
+        public Vector2 getVelocity()
+        {
+            return translationalVelocity;
+        }
+
+        public Vector2 getLastVelocity()
+        {
+            return lastVeloBeforCollision;
+        }
+
+        public GameObject.Object getObjectType()
+        {
+            return GameObject.Object.SPACE_SHIP;
         }
 
         public Texture2D getTexture()
@@ -186,8 +264,6 @@ namespace SpaceShip_Game.space_ship
 
         public void Draw(SpriteBatch spriteBatch, Astroid astroid)
         {
-            updatePixelCollision(spriteBatch, astroid);
-
             if (isColliding)
                 spriteBatch.Draw(
                     texture,
@@ -208,33 +284,6 @@ namespace SpaceShip_Game.space_ship
                     origin, 
                     Helpers.dimensionsToScale(texture, width, height),
                 SpriteEffects.None, 0);
-        }
-
-        public void updatePixelCollision(SpriteBatch spriteBatch, Astroid astroid)
-        {
-            if (Helpers.calculatePixelCollision(spriteBatch, texture, getPixelBounds(), rotation, astroid.getTexture(), astroid.getBounds(), astroid.GetProperties().rotation))
-            {
-                isColliding = true;
-
-                float topDistance = Math.Abs(getPixelBounds().Top - astroid.getBounds().Bottom);
-                float bottomDistance = Math.Abs(getPixelBounds().Bottom - astroid.getBounds().Top);
-                float leftDistance = Math.Abs(getPixelBounds().Left - astroid.getBounds().Right);
-                float rightDistance = Math.Abs(getPixelBounds().Right - astroid.getBounds().Left);
-
-                if (topDistance < bottomDistance && topDistance < leftDistance && topDistance < rightDistance) 
-                    collisionSide = COLLISION_SIDE.TOP;
-                else if (bottomDistance < topDistance && bottomDistance < leftDistance && bottomDistance < rightDistance)
-                    collisionSide = COLLISION_SIDE.BOTTOM;
-                else if (leftDistance < topDistance && leftDistance < bottomDistance && topDistance < rightDistance)
-                    collisionSide = COLLISION_SIDE.LEFT;
-                else if (rightDistance < topDistance && rightDistance < bottomDistance && rightDistance < leftDistance)
-                    collisionSide = COLLISION_SIDE.RIGHT;
-            }
-            else
-            {
-                isColliding = false;
-                collisionSide = COLLISION_SIDE.NONE;
-            }
         }
     }
 }
