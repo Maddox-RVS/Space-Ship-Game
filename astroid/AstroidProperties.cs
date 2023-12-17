@@ -30,6 +30,8 @@ namespace SpaceShip_Game.astroid
         public bool isColliding;
         public Astroid.COLLISION_SIDE collisionSide;
 
+        public Texture2D texture;
+
         public AstroidProperties(
             bool splitOnDestruction,
             bool isOffspring,
@@ -47,7 +49,8 @@ namespace SpaceShip_Game.astroid
             float angularAcceleration,
             float angularDecceleration,
             bool isColliding,
-            Astroid.COLLISION_SIDE collisionSide)
+            Astroid.COLLISION_SIDE collisionSide,
+            Texture2D texture)
         {
             this.splitOnDestruction = splitOnDestruction;
             this.isOffspring = isOffspring;
@@ -66,6 +69,7 @@ namespace SpaceShip_Game.astroid
             this.angularDecceleration = angularDecceleration;
             this.isColliding = isColliding;
             this.collisionSide =collisionSide;
+            this.texture = texture;
         }
     }
 }

@@ -11,6 +11,8 @@ namespace SpaceShip_Game
 {
     internal class Constants
     {
+        public const float UPDATE_RATE = 60.0f;
+
         public static class SpaceShipConsts
         {
             public const float WIDTH = 80.0f;

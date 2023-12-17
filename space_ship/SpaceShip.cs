@@ -37,9 +37,7 @@ namespace SpaceShip_Game.space_ship
         private Vector2 translationalDirection;
 
         private bool isColliding;
-        private bool lastIsColliding;
         private COLLISION_SIDE collisionSide;
-        private Vector2 lastVeloBeforCollision;
 
         public enum COLLISION_SIDE
         {
@@ -65,7 +63,7 @@ namespace SpaceShip_Game.space_ship
 
             translationalAcceleration = Constants.SpaceShipConsts.TRANSLATIONAL_ACCELERATION;
             maxTranslationalVelocity = Constants.SpaceShipConsts.MAX_TRANSLATIONAL_VELOCITY;
-            translationalVelocity = Vector2.Zero;
+            translationalVelocity = new Vector2(0, 0);
 
             angularAcceleration = Constants.SpaceShipConsts.ANGULAR_ACCELERATION;
             angularDecceleration = Constants.SpaceShipConsts.ANGULAR_DECCELERATION;
@@ -73,7 +71,7 @@ namespace SpaceShip_Game.space_ship
             angularVelocity = 0;
         }
 
-        public void Update(SpriteBatch spriteBatch, GameObject[] gameObjects)
+        public void Update(SpriteBatch spriteBatch, List<GameObject> gameObjects)
         {
             updateMovement();
             checkCollisions(spriteBatch, gameObjects);
@@ -120,81 +118,51 @@ namespace SpaceShip_Game.space_ship
             }
         }
 
-        public void checkCollisions(SpriteBatch spriteBatch, GameObject[] gameObjects)
+        public void hasCollidedWithGameObject(GameObject gameObject)
+        {
+            translationalVelocity = Helpers.calculateSystemVelocity(this, gameObject);
+
+            float topDistance = Math.Abs(getBounds().Top - gameObject.getBounds().Bottom);
+            float bottomDistance = Math.Abs(getBounds().Bottom - gameObject.getBounds().Top);
+            float leftDistance = Math.Abs(getBounds().Left - gameObject.getBounds().Right);
+            float rightDistance = Math.Abs(getBounds().Right - gameObject.getBounds().Left);
+
+            if (topDistance < bottomDistance && topDistance < leftDistance && topDistance < rightDistance)
+            {
+                collisionSide = COLLISION_SIDE.TOP;
+                this.y += topDistance;
+            }
+            else if (bottomDistance < topDistance && bottomDistance < leftDistance && bottomDistance < rightDistance)
+            {
+                collisionSide = COLLISION_SIDE.BOTTOM;
+                this.y -= bottomDistance;
+            }
+            else if (leftDistance < topDistance && leftDistance < bottomDistance && topDistance < rightDistance)
+            {
+                collisionSide = COLLISION_SIDE.LEFT;
+                this.x += leftDistance;
+            }
+            else if (rightDistance < topDistance && rightDistance < bottomDistance && rightDistance < leftDistance)
+            {
+                collisionSide = COLLISION_SIDE.RIGHT;
+                this.x -= rightDistance;
+            }
+        }
+
+        public void checkCollisions(SpriteBatch spriteBatch, List<GameObject> gameObjects)
         {
             foreach (GameObject gameObject in gameObjects)
             {
                 if (getBounds().Intersects(gameObject.getBounds()) && gameObject != this)
                 {
                     isColliding = true;
-
-                    float topDistance = Math.Abs(getBounds().Top - gameObject.getBounds().Bottom);
-                    float bottomDistance = Math.Abs(getBounds().Bottom - gameObject.getBounds().Top);
-                    float leftDistance = Math.Abs(getBounds().Left - gameObject.getBounds().Right);
-                    float rightDistance = Math.Abs(getBounds().Right - gameObject.getBounds().Left);
-
-                    if (topDistance < bottomDistance && topDistance < leftDistance && topDistance < rightDistance) 
-                        collisionSide = COLLISION_SIDE.TOP;
-                    else if (bottomDistance < topDistance && bottomDistance < leftDistance && bottomDistance < rightDistance)
-                        collisionSide = COLLISION_SIDE.BOTTOM;
-                    else if (leftDistance < topDistance && leftDistance < bottomDistance && topDistance < rightDistance)
-                        collisionSide = COLLISION_SIDE.LEFT;
-                    else if (rightDistance < topDistance && rightDistance < bottomDistance && rightDistance < leftDistance)
-                        collisionSide = COLLISION_SIDE.RIGHT;
+                    gameObject.hasCollidedWithGameObject(this);
                 }
                 else
                 {
                     isColliding = false;
                     collisionSide = COLLISION_SIDE.NONE;
                 }
-
-                if (isColliding && lastIsColliding != isColliding)
-                {
-                    lastVeloBeforCollision = translationalVelocity;
-
-                    if (gameObject.getVelocity() == Vector2.Zero)
-                    {
-                        switch(collisionSide)
-                        {
-                            case COLLISION_SIDE.NONE: break;
-                            case COLLISION_SIDE.TOP:
-                                translationalVelocity.Y *= -(1 - Constants.SpaceShipConsts.COLLISION_VELOCITY_LOSS_PERCENT);
-                                break;
-                            case COLLISION_SIDE.BOTTOM:
-                                translationalVelocity.Y *= -(1 - Constants.SpaceShipConsts.COLLISION_VELOCITY_LOSS_PERCENT);
-                                break;
-                            case COLLISION_SIDE.LEFT:
-                                translationalVelocity.X *= -(1 - Constants.SpaceShipConsts.COLLISION_VELOCITY_LOSS_PERCENT);
-                                break;
-                            case COLLISION_SIDE.RIGHT:
-                                translationalVelocity.X *= -(1 - Constants.SpaceShipConsts.COLLISION_VELOCITY_LOSS_PERCENT);
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        translationalVelocity = gameObject.getLastVelocity();
-                        switch(collisionSide)
-                        {
-                            case COLLISION_SIDE.NONE: break;
-                            case COLLISION_SIDE.TOP:
-                                angularVelocity += Constants.SpaceShipConsts.COLLISION_ROTATIONAL_VELOCITY;
-                                break;
-                            case COLLISION_SIDE.BOTTOM:
-                                angularVelocity -= Constants.SpaceShipConsts.COLLISION_ROTATIONAL_VELOCITY;
-                                break;
-                            case COLLISION_SIDE.LEFT:
-                                angularVelocity += Constants.SpaceShipConsts.COLLISION_ROTATIONAL_VELOCITY;
-                                break;
-                            case COLLISION_SIDE.RIGHT:
-                                angularVelocity -= Constants.SpaceShipConsts.COLLISION_ROTATIONAL_VELOCITY;
-                                break;
-                        }
-                    }
-
-                    Debug.WriteLine("test");
-                }
-                lastIsColliding = isColliding;
             }
         }
 
@@ -222,11 +190,6 @@ namespace SpaceShip_Game.space_ship
         public Vector2 getVelocity()
         {
             return translationalVelocity;
-        }
-
-        public Vector2 getLastVelocity()
-        {
-            return lastVeloBeforCollision;
         }
 
         public GameObject.Object getObjectType()
@@ -258,32 +221,22 @@ namespace SpaceShip_Game.space_ship
                 translationalDirection,
                 getBounds(),
                 collisionSide,
-                isColliding
+                isColliding,
+                texture
             );
         }
 
-        public void Draw(SpriteBatch spriteBatch, Astroid astroid)
+        public void Draw(SpriteBatch spriteBatch)
         {
-            if (isColliding)
-                spriteBatch.Draw(
-                    texture,
-                    new Vector2(x, y), 
-                    null, 
-                    Color.Red, 
-                    Helpers.degreesToRadians(rotation), 
-                    origin, 
-                    Helpers.dimensionsToScale(texture, width, height), 
-                    SpriteEffects.None, 0);
-            else
-                spriteBatch.Draw(
-                    texture, 
-                    new Vector2(x, y), 
-                    null, 
-                    Color.Gold, 
-                    Helpers.degreesToRadians(rotation), 
-                    origin, 
-                    Helpers.dimensionsToScale(texture, width, height),
-                SpriteEffects.None, 0);
+            spriteBatch.Draw(
+                texture,
+                new Vector2(x, y),
+                null,
+                Color.Gold,
+                Helpers.degreesToRadians(rotation),
+                origin,
+                Helpers.dimensionsToScale(texture, width, height),
+            SpriteEffects.None, 0);
         }
     }
 }

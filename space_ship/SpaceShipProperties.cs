@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -23,6 +24,7 @@ namespace SpaceShip_Game.space_ship
         public Rectangle bounds;
         public SpaceShip.COLLISION_SIDE collisionSide;
         public bool isColliding;
+        public Texture2D texture;
 
         public SpaceShipProperties(
             float x, float y, 
@@ -36,7 +38,8 @@ namespace SpaceShip_Game.space_ship
             Vector2 translationalDirection, 
             Rectangle bounds,
             SpaceShip.COLLISION_SIDE collisionSide,
-            bool isColliding)
+            bool isColliding,
+            Texture2D texture)
         {
             this.x = x;
             this.y = y;
@@ -51,6 +54,7 @@ namespace SpaceShip_Game.space_ship
             this.bounds = bounds;
             this.collisionSide = collisionSide;
             this.isColliding = isColliding;
+            this.texture = texture;
         }
     }
 }
