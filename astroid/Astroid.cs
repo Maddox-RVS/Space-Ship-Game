@@ -183,15 +183,16 @@ namespace SpaceShip_Game.astroid
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(
-                texture,
-                Game1.viewPort.applyTranslation(new Vector2(x, y)),
-                null,
-                Color.Gold,
-                Helpers.degreesToRadians(rotation),
-                origin,
-                Helpers.dimensionsToScale(texture, width, height),
-                SpriteEffects.None, 0);
+            if (Game1.viewPort.isInView(new Vector2(x, y), texture))
+                spriteBatch.Draw(
+                   texture,
+                   Game1.viewPort.applyTranslation(new Vector2(x, y)),
+                   null,
+                   Color.Gold,
+                   Helpers.degreesToRadians(rotation),
+                   origin,
+                   Helpers.dimensionsToScale(texture, width, height),
+                   SpriteEffects.None, 0);
         }
     }
 }

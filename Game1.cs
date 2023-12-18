@@ -78,7 +78,7 @@ namespace SpaceShip_Game
 
             for (int i = 0; i < 400; i++)
             {
-                float size = rnd.Next(40, 121);
+                float size = rnd.Next(40, 521);
                 astroids.Add(new Astroid(
                     textures["Astroid"], 
                     rnd.Next(0, screenBounds.Width+1), 
@@ -131,22 +131,7 @@ namespace SpaceShip_Game
                 screenZoom = 1f;
             }
 
-            else if (Keyboard.GetState().IsKeyDown(Keys.T))
-            {
-                viewPort.translateY(20);
-            }
-            else if (Keyboard.GetState().IsKeyDown(Keys.G))
-            {
-                viewPort.translateY(-20);
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.F))
-            {
-                viewPort.translateX(20);
-            }
-            else if (Keyboard.GetState().IsKeyDown(Keys.H))
-            {
-                viewPort.translateX(-20);
-            }
+            screenZoom = Math.Clamp(screenZoom, 1f, 10f);
 
             gameObjects = concatenateGameObjects(
                 new List<GameObject> { (GameObject)spaceShip },
@@ -168,9 +153,7 @@ namespace SpaceShip_Game
 
             spriteBatch.GraphicsDevice.SetRenderTarget(viewPortDisplay);
 
-            //------------------
             spriteBatch.Begin();
-            spriteBatch.Draw(Content.Load<Texture2D>("temp"), screenBounds, Color.CornflowerBlue);
 
             spaceShip.Draw(spriteBatch);
             foreach (Astroid astroid in astroids)
@@ -179,11 +162,9 @@ namespace SpaceShip_Game
             }
             if (debugMode) DebugDraw(spriteBatch);
             spriteBatch.End();
-            //------------------
 
             spriteBatch.GraphicsDevice.SetRenderTarget(null);
 
-            //------------------
             spriteBatch.Begin();
             spriteBatch.Draw(
                 viewPortDisplay,
@@ -195,7 +176,6 @@ namespace SpaceShip_Game
                 screenZoom / (screenZoom * screenZoom),
             SpriteEffects.None, 0);
             spriteBatch.End();
-            //------------------
 
             base.Draw(gameTime);
         }

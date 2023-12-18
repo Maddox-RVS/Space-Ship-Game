@@ -71,5 +71,11 @@ namespace SpaceShip_Game.util
         {
             return val + translation.Y;
         }
+
+        public bool isInView(Vector2 position, Texture2D objectTexture)
+        {
+            Rectangle objectBounds = new Rectangle((int)applyXTranslation(position.X), (int)applyYTranslation(position.Y), objectTexture.Width, objectTexture.Height);
+            return Game1.screenBounds.Contains(objectBounds);
+        }
     }
 }
