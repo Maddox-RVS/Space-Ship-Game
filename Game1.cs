@@ -9,12 +9,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Collections;
 using System;
+using System.Net;
 
 namespace SpaceShip_Game
 {
     public class Game1 : Game
     {
-        private GraphicsDeviceManager _graphics;
+        private GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
         public static Rectangle screenBounds;
         public static Dictionary<string, Texture2D> textures;
@@ -24,27 +25,32 @@ namespace SpaceShip_Game
         private SpaceShip spaceShip;
         public static List<Astroid> astroids;
         public Random rnd = new Random();
+        private RenderTarget2D viewPortDisplay;
+        public float screenZoom;
+        public static ViewPort viewPort;
 
         public Game1()
         {
-            _graphics = new GraphicsDeviceManager(this);
-            _graphics.PreparingDeviceSettings += (object s, PreparingDeviceSettingsEventArgs args) =>
+            graphics = new GraphicsDeviceManager(this);
+            graphics.PreparingDeviceSettings += (object s, PreparingDeviceSettingsEventArgs args) =>
             {
                 args.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
             };
             Content.RootDirectory = "Content";
-            _graphics.PreferredBackBufferWidth = 1200;
-            _graphics.PreferredBackBufferHeight = 800;
+            graphics.PreferredBackBufferWidth = 1200;
+            graphics.PreferredBackBufferHeight = 800;
             IsMouseVisible = true;
         }
 
         protected override void Initialize()
         {
-            screenBounds = new Rectangle(0, 0, _graphics.PreferredBackBufferWidth, _graphics.PreferredBackBufferHeight);
+            screenZoom = 10f;
+            screenBounds = new Rectangle(0, 0, (int)(graphics.PreferredBackBufferWidth * screenZoom), (int)(graphics.PreferredBackBufferHeight * screenZoom));
+            viewPort = new ViewPort();
             textures = new Dictionary<string, Texture2D>();
             fonts = new Dictionary<string, SpriteFont>();
             astroids = new List<Astroid>();
-            debugMode = true;
+            debugMode = false;
 
             base.Initialize();
         }
@@ -53,15 +59,24 @@ namespace SpaceShip_Game
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
+            viewPortDisplay = new RenderTarget2D(
+                spriteBatch.GraphicsDevice,
+                (int)screenBounds.Width,
+                (int)screenBounds.Height,
+                false,
+                spriteBatch.GraphicsDevice.PresentationParameters.BackBufferFormat,
+                spriteBatch.GraphicsDevice.PresentationParameters.DepthStencilFormat
+            );
+
             textures.Add("SpaceShip", Content.Load<Texture2D>("SpaceShip\\SpaceShip1"));
             textures.Add("Astroid", Content.Load<Texture2D>("Astroids\\AstroidNormal1"));
 
             fonts.Add("Debug", Content.Load<SpriteFont>("Fonts\\Default"));
 
-            spaceShip = new SpaceShip(textures["SpaceShip"], 0, 0);
+            spaceShip = new SpaceShip(textures["SpaceShip"], screenBounds.Width/2, screenBounds.Height/2);
             spaceShip.setPositionDefault();
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 400; i++)
             {
                 float size = rnd.Next(40, 121);
                 astroids.Add(new Astroid(
@@ -101,6 +116,38 @@ namespace SpaceShip_Game
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
+            viewPort.setTranslation(new Vector2(viewPortDisplay.Width/2, viewPortDisplay.Height/2) - spaceShip.getPosition());
+
+            if (Keyboard.GetState().IsKeyDown(Keys.W))
+            {
+                screenZoom += 0.1f;
+            }
+            else if (Keyboard.GetState().IsKeyDown(Keys.S))
+            {
+                screenZoom -= 0.1f;
+            }
+            else if (Keyboard.GetState().IsKeyDown(Keys.R))
+            {
+                screenZoom = 1f;
+            }
+
+            else if (Keyboard.GetState().IsKeyDown(Keys.T))
+            {
+                viewPort.translateY(20);
+            }
+            else if (Keyboard.GetState().IsKeyDown(Keys.G))
+            {
+                viewPort.translateY(-20);
+            }
+            if (Keyboard.GetState().IsKeyDown(Keys.F))
+            {
+                viewPort.translateX(20);
+            }
+            else if (Keyboard.GetState().IsKeyDown(Keys.H))
+            {
+                viewPort.translateX(-20);
+            }
+
             gameObjects = concatenateGameObjects(
                 new List<GameObject> { (GameObject)spaceShip },
                 castListToGameObjects(astroids)
@@ -108,7 +155,7 @@ namespace SpaceShip_Game
 
             foreach (Astroid astroid in astroids)
             {
-                astroid.Update(gameObjects);
+                astroid.Update(gameObjects, spriteBatch);
             }
             spaceShip.Update(spriteBatch, gameObjects);
 
@@ -118,17 +165,37 @@ namespace SpaceShip_Game
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.Black);
+
+            spriteBatch.GraphicsDevice.SetRenderTarget(viewPortDisplay);
+
+            //------------------
             spriteBatch.Begin();
+            spriteBatch.Draw(Content.Load<Texture2D>("temp"), screenBounds, Color.CornflowerBlue);
 
             spaceShip.Draw(spriteBatch);
             foreach (Astroid astroid in astroids)
             {
                 astroid.Draw(spriteBatch);
             }
-
             if (debugMode) DebugDraw(spriteBatch);
-
             spriteBatch.End();
+            //------------------
+
+            spriteBatch.GraphicsDevice.SetRenderTarget(null);
+
+            //------------------
+            spriteBatch.Begin();
+            spriteBatch.Draw(
+                viewPortDisplay,
+                new Vector2(graphics.PreferredBackBufferWidth/2, graphics.PreferredBackBufferHeight/2),
+                null,
+                Color.White,
+                Helpers.degreesToRadians(0.0f),
+                new Vector2(viewPortDisplay.Width/2, viewPortDisplay.Height/2),
+                screenZoom / (screenZoom * screenZoom),
+            SpriteEffects.None, 0);
+            spriteBatch.End();
+            //------------------
 
             base.Draw(gameTime);
         }
@@ -140,14 +207,17 @@ namespace SpaceShip_Game
 
             foreach (GameObject gameObject in gameObjects)
             {
-                spriteBatch.Draw(texture, gameObject.getBounds(), new Color(0, 0, 255, 20));
+                spriteBatch.Draw(texture, screenBounds, new Color(0, 0, 100, 20));
+                spriteBatch.Draw(texture, gameObject.getEntireBounds(), new Color(0, 0, 100, 20));
+                foreach (Rectangle bound in gameObject.getSpecialBounds())
+                {
+                    spriteBatch.Draw(texture, bound, new Color(0, 0, 255, 20));
+                }
             }
 
             spriteBatch.DrawString(fonts["Debug"], "Rotation: " + spaceShip.getProperties().rotation.ToString(), new Vector2(15, 10), Color.Blue);
             spriteBatch.DrawString(fonts["Debug"], "Velocity: " + spaceShip.getProperties().translationalVelocity.X.ToString() + ", " + spaceShip.getProperties().translationalVelocity.Y.ToString(), new Vector2(15, 80), Color.Blue);
             spriteBatch.DrawString(fonts["Debug"], "Direction: " + spaceShip.getProperties().translationalDirection.X.ToString() + ", " + spaceShip.getProperties().translationalDirection.Y.ToString(), new Vector2(15, 150), Color.Blue);
-            spriteBatch.DrawString(fonts["Debug"], "IsColliding: " + spaceShip.getProperties().isColliding.ToString(), new Vector2(15, 220), Color.Blue);
-            spriteBatch.DrawString(fonts["Debug"], "CollisionSide: " + spaceShip.getProperties().collisionSide.ToString(), new Vector2(15, 290), Color.Blue);
         }
     }
 }

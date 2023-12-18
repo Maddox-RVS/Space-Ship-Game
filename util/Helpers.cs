@@ -24,13 +24,25 @@ namespace SpaceShip_Game.util
 
         public static Vector2 calculateSystemVelocity(GameObject object1, GameObject object2)
         {
-            float object1Mass = (object1.getBounds().Width * object1.getBounds().Height) * 0.1f;
-            float object2Mass = (object2.getBounds().Width * object2.getBounds().Height) * 0.1f;
+            float object1Mass = (object1.getEntireBounds().Width * object1.getEntireBounds().Height) * 0.1f;
+            float object2Mass = (object2.getEntireBounds().Width * object2.getEntireBounds().Height) * 0.1f;
             Vector2 object1Velo = new Vector2(object1.getVelocity().X * Constants.UPDATE_RATE, object1.getVelocity().Y * Constants.UPDATE_RATE);
             Vector2 object2Velo = new Vector2(object2.getVelocity().X * Constants.UPDATE_RATE, object2.getVelocity().Y * Constants.UPDATE_RATE);
             float xvelo = ((object1Mass * object1Velo.X)+(object2Mass * object2Velo.X))/(object1Mass + object2Mass);
             float yvelo = ((object1Mass * object1Velo.Y)+(object2Mass * object2Velo.Y))/(object1Mass + object2Mass);
             return new Vector2(xvelo / 60f, yvelo / 60f);
+        }
+
+        public static bool intersects(List<Rectangle> bounds1, List<Rectangle> bounds2)
+        {
+            foreach (Rectangle bound1 in bounds1)
+            {
+                foreach (Rectangle bound2 in bounds2)
+                {
+                    if (bound1.Intersects(bound2)) return true;
+                }
+            }
+            return false;
         }
 
         public static float scope0To360(float degrees)

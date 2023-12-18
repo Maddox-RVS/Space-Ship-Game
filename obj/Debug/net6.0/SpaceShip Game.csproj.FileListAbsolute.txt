@@ -26,3 +26,4 @@ C:\Users\rynvn\Desktop\Programs\C# Programs\SpaceShip Game\obj\Debug\net6.0\ref\
 C:\Users\rynvn\Desktop\Programs\C# Programs\SpaceShip Game\bin\Debug\net6.0\Content\Astroids\AstroidNormal1.xnb
 C:\Users\rynvn\Desktop\Programs\C# Programs\SpaceShip Game\bin\Debug\net6.0\Content\SpaceShip\SpaceShip1.xnb
 C:\Users\rynvn\Desktop\Programs\C# Programs\SpaceShip Game\bin\Debug\net6.0\Content\Fonts\Default.xnb
+C:\Users\rynvn\Desktop\Programs\C# Programs\SpaceShip Game\bin\Debug\net6.0\Content\temp.xnb

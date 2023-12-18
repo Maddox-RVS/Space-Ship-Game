@@ -17,7 +17,8 @@ namespace SpaceShip_Game.util
             ASTROID
         }
 
-        public Rectangle getBounds();
+        public Rectangle getEntireBounds();
+        public List<Rectangle> getSpecialBounds();
         public Vector2 getPosition();
         public float getRotationDegrees();
         public Vector2 getVelocity();

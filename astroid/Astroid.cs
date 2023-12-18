@@ -34,18 +34,6 @@ namespace SpaceShip_Game.astroid
         private float angularAcceleration;
         private float angularDecceleration;
 
-        private bool isColliding;
-        private COLLISION_SIDE collisionSide;
-
-        public enum COLLISION_SIDE
-        {
-            NONE,
-            TOP,
-            BOTTOM,
-            LEFT,
-            RIGHT
-        }
-
         public Astroid(Texture2D texture, float x, float y, float width, float height, bool splitOnDestruction, float offspringSizePercent, bool isOffspring)
         {
             this.texture = texture;
@@ -58,9 +46,9 @@ namespace SpaceShip_Game.astroid
             this.isOffspring = isOffspring;
 
             rotation = 0.0f;
-            origin = new Vector2(width / 2, height / 2);
+            origin = new Vector2(texture.Width / 2, texture.Height / 2);
 
-            translationalVelocity = new Vector2(0, 0);
+            translationalVelocity = Vector2.Zero;
             maxTranslationalVelocity = Constants.AstroidConsts.MAX_TRANSLATIONAL_VELOCITY;
             translationalAcceleration = Constants.AstroidConsts.TRANSLATIONAL_ACCELERATION;
 
@@ -70,22 +58,14 @@ namespace SpaceShip_Game.astroid
             angularDecceleration = Constants.AstroidConsts.ANGULAR_DECCELERATION;
         }
 
-        public void Update(List<GameObject> gameObjects)
+        public void Update(List<GameObject> gameObjects, SpriteBatch spriteBatch)
         {
             updateMovement();
-            checkCollisions(gameObjects);
+            checkCollisions(gameObjects, spriteBatch);
         }
 
         private void updateMovement()
         {
-            //temporary
-            //------------------------------------------------------------
-            if (x < -width) x = Game1.screenBounds.Width + width;
-            else if (x > Game1.screenBounds.Width + width) x = -width;
-            if (y < -height) y = Game1.screenBounds.Height + height;
-            else if (y > Game1.screenBounds.Height + height) y = -height;
-            //------------------------------------------------------------
-
             x += translationalVelocity.X;
             y += translationalVelocity.Y;
             translationalVelocity.X = Math.Clamp(translationalVelocity.X, -maxTranslationalVelocity, maxTranslationalVelocity);
@@ -103,53 +83,57 @@ namespace SpaceShip_Game.astroid
         {
             translationalVelocity = Helpers.calculateSystemVelocity(this, gameObject);
 
-            float topDistance = Math.Abs(getBounds().Top - gameObject.getBounds().Bottom);
-            float bottomDistance = Math.Abs(getBounds().Bottom - gameObject.getBounds().Top);
-            float leftDistance = Math.Abs(getBounds().Left - gameObject.getBounds().Right);
-            float rightDistance = Math.Abs(getBounds().Right - gameObject.getBounds().Left);
+            float topDistance = Math.Abs(getEntireBounds().Top - gameObject.getEntireBounds().Bottom);
+            float bottomDistance = Math.Abs(getEntireBounds().Bottom - gameObject.getEntireBounds().Top);
+            float leftDistance = Math.Abs(getEntireBounds().Left - gameObject.getEntireBounds().Right);
+            float rightDistance = Math.Abs(getEntireBounds().Right - gameObject.getEntireBounds().Left);
 
             if (topDistance < bottomDistance && topDistance < leftDistance && topDistance < rightDistance)
             {
-                collisionSide = COLLISION_SIDE.TOP;
                 this.y += topDistance;
             }
             else if (bottomDistance < topDistance && bottomDistance < leftDistance && bottomDistance < rightDistance)
             {
-                collisionSide = COLLISION_SIDE.BOTTOM;
                 this.y -= bottomDistance;
             }
             else if (leftDistance < topDistance && leftDistance < bottomDistance && topDistance < rightDistance)
             {
-                collisionSide = COLLISION_SIDE.LEFT;
                 this.x += leftDistance;
             }
             else if (rightDistance < topDistance && rightDistance < bottomDistance && rightDistance < leftDistance)
             {
-                collisionSide = COLLISION_SIDE.RIGHT;
                 this.x -= rightDistance;
             }
         }
 
-        public void checkCollisions(List<GameObject> gameObjects)
+        public void checkCollisions(List<GameObject> gameObjects, SpriteBatch spriteBatch)
         {
             foreach (GameObject gameObject in gameObjects)
             {
-                if (getBounds().Intersects(gameObject.getBounds()) && gameObject != this)
-                {
-                    isColliding = true;
+                if (getEntireBounds().Intersects(gameObject.getEntireBounds()) && gameObject != this)
                     gameObject.hasCollidedWithGameObject(this);
-                }
-                else
-                {
-                    isColliding = false;
-                    collisionSide = COLLISION_SIDE.NONE;
-                }
             }
         }
 
-        public Rectangle getBounds()
+        public Rectangle getEntireBounds()
         {
-            return new Rectangle((int)x - (int)(width/2), (int)y - (int)(height/2), (int)width, (int)height);
+            float boundsMultiplier = 1.0f;
+            return new Rectangle(
+                (int)x - (int)((width * boundsMultiplier)/2), 
+                (int)y - (int)((height * boundsMultiplier)/2), 
+                (int)(width * boundsMultiplier), 
+                (int)(height * boundsMultiplier));
+        }
+
+        public List<Rectangle> getSpecialBounds()
+        {
+            return new List<Rectangle> { 
+                new Rectangle(
+                (int)x - (int)((width)/2), 
+                (int)y - (int)((height)/2), 
+                (int)(width), 
+                (int)(height)) 
+            };
         }
 
         public Vector2 getPosition()
@@ -193,8 +177,6 @@ namespace SpaceShip_Game.astroid
                 maxAngularVelocity,
                 angularAcceleration,
                 angularDecceleration,
-                isColliding,
-                collisionSide,
                 texture
             );
         }
@@ -203,7 +185,7 @@ namespace SpaceShip_Game.astroid
         {
             spriteBatch.Draw(
                 texture,
-                new Vector2(x, y),
+                Game1.viewPort.applyTranslation(new Vector2(x, y)),
                 null,
                 Color.Gold,
                 Helpers.degreesToRadians(rotation),

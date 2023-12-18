@@ -36,18 +36,6 @@ namespace SpaceShip_Game.space_ship
         private Vector2 translationalVelocity;
         private Vector2 translationalDirection;
 
-        private bool isColliding;
-        private COLLISION_SIDE collisionSide;
-
-        public enum COLLISION_SIDE
-        {
-            NONE,
-            TOP,
-            BOTTOM,
-            LEFT,
-            RIGHT
-        }
-
         public SpaceShip(Texture2D texture, float x, float y)
         {
             this.texture = texture;
@@ -63,7 +51,7 @@ namespace SpaceShip_Game.space_ship
 
             translationalAcceleration = Constants.SpaceShipConsts.TRANSLATIONAL_ACCELERATION;
             maxTranslationalVelocity = Constants.SpaceShipConsts.MAX_TRANSLATIONAL_VELOCITY;
-            translationalVelocity = new Vector2(0, 0);
+            translationalVelocity = Vector2.Zero;
 
             angularAcceleration = Constants.SpaceShipConsts.ANGULAR_ACCELERATION;
             angularDecceleration = Constants.SpaceShipConsts.ANGULAR_DECCELERATION;
@@ -79,14 +67,6 @@ namespace SpaceShip_Game.space_ship
 
         private void updateMovement()
         {
-            //temporary
-            //------------------------------------------------------------
-            if (x < -width) x = Game1.screenBounds.Width + width;
-            else if (x > Game1.screenBounds.Width + width) x = -width;
-            if (y < -height) y = Game1.screenBounds.Height + height;
-            else if (y > Game1.screenBounds.Height + height) y = -height;
-            //------------------------------------------------------------
-
             x += translationalVelocity.X;
             y += translationalVelocity.Y;
             translationalVelocity.X = Math.Clamp(translationalVelocity.X, -maxTranslationalVelocity, maxTranslationalVelocity);
@@ -122,29 +102,25 @@ namespace SpaceShip_Game.space_ship
         {
             translationalVelocity = Helpers.calculateSystemVelocity(this, gameObject);
 
-            float topDistance = Math.Abs(getBounds().Top - gameObject.getBounds().Bottom);
-            float bottomDistance = Math.Abs(getBounds().Bottom - gameObject.getBounds().Top);
-            float leftDistance = Math.Abs(getBounds().Left - gameObject.getBounds().Right);
-            float rightDistance = Math.Abs(getBounds().Right - gameObject.getBounds().Left);
+            float topDistance = Math.Abs(getEntireBounds().Top - gameObject.getEntireBounds().Bottom);
+            float bottomDistance = Math.Abs(getEntireBounds().Bottom - gameObject.getEntireBounds().Top);
+            float leftDistance = Math.Abs(getEntireBounds().Left - gameObject.getEntireBounds().Right);
+            float rightDistance = Math.Abs(getEntireBounds().Right - gameObject.getEntireBounds().Left);
 
             if (topDistance < bottomDistance && topDistance < leftDistance && topDistance < rightDistance)
             {
-                collisionSide = COLLISION_SIDE.TOP;
                 this.y += topDistance;
             }
             else if (bottomDistance < topDistance && bottomDistance < leftDistance && bottomDistance < rightDistance)
             {
-                collisionSide = COLLISION_SIDE.BOTTOM;
                 this.y -= bottomDistance;
             }
             else if (leftDistance < topDistance && leftDistance < bottomDistance && topDistance < rightDistance)
             {
-                collisionSide = COLLISION_SIDE.LEFT;
                 this.x += leftDistance;
             }
             else if (rightDistance < topDistance && rightDistance < bottomDistance && rightDistance < leftDistance)
             {
-                collisionSide = COLLISION_SIDE.RIGHT;
                 this.x -= rightDistance;
             }
         }
@@ -153,16 +129,8 @@ namespace SpaceShip_Game.space_ship
         {
             foreach (GameObject gameObject in gameObjects)
             {
-                if (getBounds().Intersects(gameObject.getBounds()) && gameObject != this)
-                {
-                    isColliding = true;
+                if (getEntireBounds().Intersects(gameObject.getEntireBounds()) && gameObject != this)
                     gameObject.hasCollidedWithGameObject(this);
-                }
-                else
-                {
-                    isColliding = false;
-                    collisionSide = COLLISION_SIDE.NONE;
-                }
             }
         }
 
@@ -172,14 +140,25 @@ namespace SpaceShip_Game.space_ship
             y = Game1.screenBounds.Height / 2 - height / 2;
         }
 
-        public Rectangle getSeperateBounds()
+        public Rectangle getEntireBounds()
         {
-            return new Rectangle((int)x - (int)(boundsWidth/2), (int)y - (int)(boundsHeight/2), (int)boundsWidth, (int)boundsHeight);
+            float boundsMultiplier = 1.0f;
+            return new Rectangle(
+                (int)x - (int)((width * boundsMultiplier) / 2), 
+                (int)y - (int)((height * boundsMultiplier) / 2), 
+                (int)(width * boundsMultiplier), 
+                (int)(height * boundsMultiplier));
         }
 
-        public Rectangle getBounds()
+        public List<Rectangle> getSpecialBounds()
         {
-            return new Rectangle((int)x - (int)(width/2), (int)y - (int)(height/2), (int)width, (int)height);
+            return new List<Rectangle> { 
+                new Rectangle(
+                (int)(x - (width * 0.5)/2), 
+                (int)(y - (width * 0.5)/2), 
+                (int)(width * 0.5), 
+                (int)(height * 0.5)) 
+            };
         }
 
         public Vector2 getPosition()
@@ -219,9 +198,7 @@ namespace SpaceShip_Game.space_ship
                 maxAngularVelocity,
                 translationalVelocity,
                 translationalDirection,
-                getBounds(),
-                collisionSide,
-                isColliding,
+                getEntireBounds(),
                 texture
             );
         }
@@ -230,9 +207,9 @@ namespace SpaceShip_Game.space_ship
         {
             spriteBatch.Draw(
                 texture,
-                new Vector2(x, y),
+                Game1.viewPort.applyTranslation(new Vector2(x, y)),
                 null,
-                Color.Gold,
+                Color.White,
                 Helpers.degreesToRadians(rotation),
                 origin,
                 Helpers.dimensionsToScale(texture, width, height),
